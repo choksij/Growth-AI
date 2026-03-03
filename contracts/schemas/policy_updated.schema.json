@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/policy_updated.schema.json",
+  "title": "Policy Updated",
+  "type": "object",
+  "allOf": [{ "$ref": "./envelope.schema.json" }],
+  "properties": {
+    "event_type": { "type": "string", "const": "POLICY_UPDATED" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "bucket_key", "action_type", "success", "reward", "bandit_update"],
+      "properties": {
+        "action_id": { "type": "string", "format": "uuid" },
+        "bucket_key": { "type": "string", "minLength": 1 },
+        "action_type": {
+          "type": "string",
+          "enum": ["PAUSE_CREATIVE", "REALLOC_BUDGET", "ADJUST_BID", "REFRESH_COPY"]
+        },
+        "success": { "type": "boolean" },
+        "reward": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["roas_before", "roas_after", "cpa_before", "cpa_after", "score_S"],
+          "properties": {
+            "roas_before": { "type": "number", "minimum": 0 },
+            "roas_after": { "type": "number", "minimum": 0 },
+            "cpa_before": { "type": "number", "minimum": 0 },
+            "cpa_after": { "type": "number", "minimum": 0 },
+            "score_S": { "type": "number" }
+          }
+        },
+        "bandit_update": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alpha_before", "beta_before", "alpha_after", "beta_after"],
+          "properties": {
+            "alpha_before": { "type": "integer", "minimum": 0 },
+            "beta_before": { "type": "integer", "minimum": 0 },
+            "alpha_after": { "type": "integer", "minimum": 0 },
+            "beta_after": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  },
+  "required": ["event_type", "payload"]
+}

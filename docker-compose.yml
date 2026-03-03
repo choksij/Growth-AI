@@ -1,0 +1,302 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: growthpilot-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.10
+    container_name: growthpilot-redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - "1G"
+      - --reserve-memory
+      - "0M"
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --api-urls=http://localhost:9644 | grep -q Healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  lightdash:
+    image: lightdash/lightdash:latest
+    container_name: growthpilot-lightdash
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${LIGHTDASH_PORT}:8080"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LIGHTDASH_SECRET: ${LIGHTDASH_SECRET}
+      SECURE_COOKIES: "false"
+      NODE_ENV: "development"
+  
+    restart: unless-stopped
+
+  ingestion-service:
+    build:
+      context: .
+      dockerfile: services/ingestion-service/Dockerfile
+    container_name: growthpilot-ingestion
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    environment:
+      # Postgres (inside docker network)
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+      # Redpanda (inside docker network)
+      REDPANDA_BROKERS: redpanda:9092
+
+      # ingestion config
+      INGESTION_GROUP_ID: growthpilot-ingestion
+      INGESTION_INPUT_TOPIC: ad.events
+      INGESTION_OUTPUT_TOPIC: ad.events.normalized
+      INGESTION_EMIT_NORMALIZED: "true"
+    volumes:
+      # allow local path dependency: growthpilot-contracts @ file:///contracts/python
+      - ./contracts:/contracts:ro
+      # optional: for local editing convenience (not required)
+      # - ./services/ingestion-service:/app
+    restart: unless-stopped
+
+  simulator-service:
+    build:
+      context: .
+      dockerfile: services/simulator-service/Dockerfile
+    container_name: growthpilot-simulator
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      REDPANDA_BROKERS: redpanda:9092
+      SIM_WORKSPACE_ID: ${WORKSPACE_ID:-ws_demo}
+      SIM_TOPIC: ad.events
+      SIM_RATE_EPS: "10"
+      SIM_CAMPAIGNS: "3"
+      SIM_ENABLE_API: "true"
+      SIM_API_PORT: "8002"
+    ports:
+      - "8002:8002"
+    restart: unless-stopped
+    volumes:
+      - ./contracts:/contracts:ro
+  
+  kpi-service:
+    build:
+      context: .
+      dockerfile: services/kpi-service/Dockerfile
+    container_name: growthpilot-kpi
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      ingestion-service:
+        condition: service_started
+    ports:
+      - "8003:8003"
+    environment:
+      KPI_WINDOW_SECONDS: "60"
+      KPI_HISTORY_MINUTES: "5"
+      KPI_ZSCORE_THRESHOLD: "1.5"
+      
+      DD_ENABLED: "true"
+      DD_AGENT_HOST: "datadog-agent"
+      DD_ENV: "demo"
+      DD_SERVICE_NAME: "growthpilot"
+
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+
+      REDPANDA_BROKERS: redpanda:9092
+
+      KPI_GROUP_ID: growthpilot-kpi
+      KPI_INPUT_TOPIC: ad.events.normalized
+      KPI_ALERTS_TOPIC: alerts.raised
+      KPI_EMIT_ALERTS: "true"
+    restart: unless-stopped
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./shared:/shared:ro
+  executor-service:
+    build:
+      context: .
+      dockerfile: services/executor-service/Dockerfile
+    container_name: growthpilot-executor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    ports:
+      - "8004:8004"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      DD_ENABLED: "true"
+      DD_AGENT_HOST: "datadog-agent"
+      DD_ENV: "demo"
+      DD_SERVICE_NAME: "growthpilot"
+      REDPANDA_BROKERS: redpanda:9092
+      EXECUTOR_GROUP_ID: growthpilot-executor
+      EXECUTOR_INPUT_TOPIC: actions.proposed
+      EXECUTOR_OUTPUT_TOPIC: actions.applied
+      SIMULATOR_URL: http://simulator-service:8002
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./shared:/shared:ro
+    restart: unless-stopped
+
+  orchestrator-service:
+    build:
+      context: .
+      dockerfile: services/orchestrator-service/Dockerfile
+    container_name: growthpilot-orchestrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    ports:
+      - "8005:8005"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      DD_ENABLED: "true"
+      DD_AGENT_HOST: "datadog-agent"
+      DD_ENV: "demo"
+      DD_SERVICE_NAME: "growthpilot"
+      REDPANDA_BROKERS: redpanda:9092
+      ORCHESTRATOR_GROUP_ID: growthpilot-orchestrator
+      ORCHESTRATOR_INPUT_TOPIC: alerts.raised
+      ORCHESTRATOR_OUTPUT_TOPIC: actions.proposed
+      ORCHESTRATOR_MIN_SEVERITY: high
+      ORCHESTRATOR_COOLDOWN_MINUTES: 2
+      ORCHESTRATOR_MAX_BUDGET_SHIFT_PCT: "0.08"
+      AIRIA_API_KEY: ${AIRIA_API_KEY}
+      AIRIA_PIPELINE_ID: ${AIRIA_PIPELINE_ID}
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./shared:/shared:ro
+    restart: unless-stopped
+  
+  # ADD THIS BLOCK to docker-compose.yml after orchestrator-service
+
+  evaluator-service:
+    build:
+      context: .
+      dockerfile: services/evaluator-service/Dockerfile
+    container_name: growthpilot-evaluator
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    ports:
+      - "8006:8006"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      DD_ENABLED: "true"
+      DD_AGENT_HOST: "datadog-agent"
+      DD_ENV: "demo"
+      DD_SERVICE_NAME: "growthpilot"
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID:-21m00Tcm4TlvDq8ikWAM}
+      ELEVENLABS_MODEL: ${ELEVENLABS_MODEL:-eleven_turbo_v2}
+      BRIEFING_DIR: /tmp/briefings
+      REDPANDA_BROKERS: redpanda:9092
+      EVALUATOR_GROUP_ID: growthpilot-evaluator
+      EVALUATOR_INPUT_TOPIC: actions.applied
+      EVALUATOR_OUTPUT_TOPIC: policy.updated
+      EVAL_WINDOW_SECONDS: "120"        # 2 min for demo; use 900+ for production
+      EVALUATOR_MAX_PENDING: "200"
+    volumes:
+      - ./contracts:/contracts:ro
+      - ./shared:/shared:ro
+    restart: unless-stopped
+
+  # ADD THIS BLOCK to docker-compose.yml (alongside your other services)
+# Datadog Agent — collects metrics, traces, logs from all GrowthPilot containers
+
+  datadog-agent:
+    image: registry.datadoghq.com/agent:7
+    container_name: growthpilot-datadog
+    environment:
+      DD_API_KEY: ${DD_API_KEY}
+      DD_SITE: ${DD_SITE:-datadoghq.com}
+      DD_ENV: ${DD_ENV:-demo}
+      DD_SERVICE: growthpilot
+      DD_VERSION: "1.0.0"
+      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
+      DD_DOGSTATSD_PORT: "8125"
+      DD_APM_ENABLED: "true"
+      DD_APM_NON_LOCAL_TRAFFIC: "true"
+      DD_LOGS_ENABLED: "true"
+      DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL: "true"
+      DD_CONTAINER_EXCLUDE: "name:growthpilot-datadog"
+      DD_PROCESS_AGENT_ENABLED: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/datadog:/var/run/datadog          # APM socket
+    ports:
+      - "8125:8125/udp"
+      - "8126:8126"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

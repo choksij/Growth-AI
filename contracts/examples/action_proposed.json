@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "event_id": "44444444-4444-4444-4444-444444444444",
+  "event_type": "ACTION_PROPOSED",
+  "ts": "2026-02-21T15:05:25Z",
+  "workspace_id": "ws_demo",
+  "source": "orchestrator-service",
+  "trace_id": "trace_demo_001",
+  "payload": {
+    "action_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "alert_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "campaign_id": "cmp_1",
+    "action_type": "REALLOC_BUDGET",
+    "parameters": {
+      "budget_shift": {
+        "from_segment": "seg_2",
+        "to_segment": "seg_1",
+        "pct": 0.08
+      },
+      "pause_ad_ids": ["ad_2"]
+    },
+    "constraints": {
+      "max_budget_shift_pct": 0.1,
+      "cooldown_minutes": 30
+    },
+    "policy": {
+      "bucket_key": "objective=roas|severity=high|type=prospecting",
+      "thompson_samples": {
+        "PAUSE_CREATIVE": 0.61,
+        "REALLOC_BUDGET": 0.74,
+        "ADJUST_BID": 0.33
+      },
+      "chosen_reason": "Highest sampled expected success under constraints"
+    },
+    "explainability": {
+      "diagnosis_top": "Creative fatigue on ad_2 and underperforming segment seg_2",
+      "expected_impact": "Reallocate spend to seg_1 and pause ad_2 to recover ROAS"
+    },
+    "idempotency_key": "cmp_1|REALLOC_BUDGET|2026-02-21T15:05Z"
+  }
+}

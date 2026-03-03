@@ -1,0 +1,5 @@
+{
+  "name": "roas_drop",
+  "description": "Revenue per conversion drops and CVR decreases, causing ROAS to fall.",
+  "duration_s": 180
+}

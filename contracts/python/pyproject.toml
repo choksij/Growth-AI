@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "growthpilot-contracts"
+version = "0.1.0"
+description = "Shared Pydantic contracts for GrowthPilot AI event schemas."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2.6.1",
+  "pydantic-settings>=2.2.1"
+]
+
+[tool.setuptools]
+packages = ["growthpilot_contracts"]

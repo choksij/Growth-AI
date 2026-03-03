@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/action_applied.schema.json",
+  "title": "Action Applied",
+  "type": "object",
+  "allOf": [{ "$ref": "./envelope.schema.json" }],
+  "properties": {
+    "event_type": { "type": "string", "const": "ACTION_APPLIED" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "campaign_id", "status", "applied_changes", "cooldown_until"],
+      "properties": {
+        "action_id": { "type": "string", "format": "uuid" },
+        "campaign_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["APPLIED", "REJECTED", "FAILED"] },
+        "applied_changes": { "type": "object", "additionalProperties": true },
+        "cooldown_until": { "type": "string", "format": "date-time" },
+        "error": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "required": ["event_type", "payload"]
+}

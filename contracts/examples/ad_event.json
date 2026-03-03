@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "event_id": "11111111-1111-1111-1111-111111111111",
+  "event_type": "CLICK",
+  "ts": "2026-02-21T15:00:00Z",
+  "workspace_id": "ws_demo",
+  "source": "simulator",
+  "trace_id": "trace_demo_001",
+  "payload": {
+    "campaign_id": "cmp_1",
+    "adset_id": "as_1",
+    "ad_id": "ad_2",
+    "segment_id": "seg_2",
+    "value": 1,
+    "currency": null,
+    "metadata": {
+      "placement": "feed",
+      "device": "mobile"
+    }
+  }
+}

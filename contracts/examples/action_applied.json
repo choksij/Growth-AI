@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "event_id": "55555555-5555-5555-5555-555555555555",
+  "event_type": "ACTION_APPLIED",
+  "ts": "2026-02-21T15:05:40Z",
+  "workspace_id": "ws_demo",
+  "source": "executor-service",
+  "trace_id": "trace_demo_001",
+  "payload": {
+    "action_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "campaign_id": "cmp_1",
+    "status": "APPLIED",
+    "applied_changes": {
+      "paused_ad_ids": ["ad_2"],
+      "budget_allocations_before": {
+        "seg_1": 0.4,
+        "seg_2": 0.6
+      },
+      "budget_allocations_after": {
+        "seg_1": 0.48,
+        "seg_2": 0.52
+      }
+    },
+    "cooldown_until": "2026-02-21T15:35:40Z",
+    "error": null
+  }
+}

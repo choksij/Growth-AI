@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/action_proposed.schema.json",
+  "title": "Action Proposed",
+  "type": "object",
+  "allOf": [{ "$ref": "./envelope.schema.json" }],
+  "properties": {
+    "event_type": { "type": "string", "const": "ACTION_PROPOSED" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "alert_id",
+        "campaign_id",
+        "action_type",
+        "parameters",
+        "constraints",
+        "policy",
+        "idempotency_key"
+      ],
+      "properties": {
+        "action_id": { "type": "string", "format": "uuid" },
+        "alert_id": { "type": "string", "format": "uuid" },
+        "campaign_id": { "type": "string", "minLength": 1 },
+        "action_type": {
+          "type": "string",
+          "enum": ["PAUSE_CREATIVE", "REALLOC_BUDGET", "ADJUST_BID", "REFRESH_COPY"]
+        },
+        "parameters": { "type": "object", "additionalProperties": true },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_budget_shift_pct", "cooldown_minutes"],
+          "properties": {
+            "max_budget_shift_pct": { "type": "number", "minimum": 0, "maximum": 1 },
+            "cooldown_minutes": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bucket_key", "thompson_samples", "chosen_reason"],
+          "properties": {
+            "bucket_key": { "type": "string", "minLength": 1 },
+            "thompson_samples": {
+              "type": "object",
+              "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "chosen_reason": { "type": "string", "minLength": 1 }
+          }
+        },
+        "explainability": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "idempotency_key": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "required": ["event_type", "payload"]
+}

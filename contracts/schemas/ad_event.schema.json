@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/ad_event.schema.json",
+  "title": "Ad Event",
+  "type": "object",
+  "allOf": [{ "$ref": "./envelope.schema.json" }],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": ["IMPRESSION", "CLICK", "CONVERSION", "SPEND", "REVENUE"]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["campaign_id", "value"],
+      "properties": {
+        "campaign_id": { "type": "string", "minLength": 1 },
+        "adset_id": { "type": ["string", "null"], "minLength": 1 },
+        "ad_id": { "type": ["string", "null"], "minLength": 1 },
+        "segment_id": { "type": ["string", "null"], "minLength": 1 },
+        "value": { "type": "number" },
+        "currency": {
+          "type": ["string", "null"],
+          "minLength": 3,
+          "maxLength": 3
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "required": ["event_type", "payload"]
+}

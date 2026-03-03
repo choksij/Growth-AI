@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/kpi_update.schema.json",
+  "title": "KPI Update",
+  "type": "object",
+  "allOf": [{ "$ref": "./envelope.schema.json" }],
+  "properties": {
+    "event_type": { "type": "string", "const": "KPI_UPDATE" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "campaign_id",
+        "window",
+        "impressions",
+        "clicks",
+        "conversions",
+        "spend",
+        "revenue",
+        "ctr",
+        "cvr",
+        "cpa",
+        "roas",
+        "pacing_ratio",
+        "anomaly_score"
+      ],
+      "properties": {
+        "level": { "type": "string", "enum": ["campaign", "adset", "ad", "segment"] },
+        "campaign_id": { "type": "string", "minLength": 1 },
+        "adset_id": { "type": ["string", "null"] },
+        "ad_id": { "type": ["string", "null"] },
+        "segment_id": { "type": ["string", "null"] },
+        "window": { "type": "string", "enum": ["1m", "5m", "15m", "60m", "1d"] },
+        "impressions": { "type": "integer", "minimum": 0 },
+        "clicks": { "type": "integer", "minimum": 0 },
+        "conversions": { "type": "integer", "minimum": 0 },
+        "spend": { "type": "number", "minimum": 0 },
+        "revenue": { "type": "number", "minimum": 0 },
+        "ctr": { "type": "number", "minimum": 0 },
+        "cvr": { "type": "number", "minimum": 0 },
+        "cpa": { "type": "number", "minimum": 0 },
+        "roas": { "type": "number", "minimum": 0 },
+        "pacing_ratio": { "type": "number", "minimum": 0 },
+        "anomaly_score": { "type": "number", "minimum": 0 },
+        "baseline": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "required": ["event_type", "payload"]
+}

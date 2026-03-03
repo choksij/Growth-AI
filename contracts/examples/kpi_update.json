@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "event_id": "22222222-2222-2222-2222-222222222222",
+  "event_type": "KPI_UPDATE",
+  "ts": "2026-02-21T15:05:00Z",
+  "workspace_id": "ws_demo",
+  "source": "kpi-service",
+  "trace_id": "trace_demo_001",
+  "payload": {
+    "level": "campaign",
+    "campaign_id": "cmp_1",
+    "adset_id": null,
+    "ad_id": null,
+    "segment_id": null,
+    "window": "15m",
+    "impressions": 50000,
+    "clicks": 900,
+    "conversions": 35,
+    "spend": 700.0,
+    "revenue": 980.0,
+    "ctr": 0.018,
+    "cvr": 0.0389,
+    "cpa": 20.0,
+    "roas": 1.4,
+    "pacing_ratio": 1.12,
+    "anomaly_score": 3.4,
+    "baseline": {
+      "roas": 2.1,
+      "cpa": 14.8,
+      "ctr": 0.021,
+      "cvr": 0.041
+    }
+  }
+}

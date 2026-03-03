@@ -1,0 +1,24 @@
+[project]
+name = "growthpilot-shared"
+version = "0.1.0"
+description = "Shared infrastructure utilities for GrowthPilot services (config/logging/db/stream/idempotency)."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "python-dotenv>=1.0.0",
+  "orjson>=3.10.0",
+  "psycopg[binary]>=3.2.0",
+  "psycopg-pool>=3.2.0",
+  "aiokafka>=0.10.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["growthpilot_shared*"]

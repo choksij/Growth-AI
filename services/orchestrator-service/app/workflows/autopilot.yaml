@@ -1,0 +1,88 @@
+# autopilot.yaml
+# GrowthPilot Autopilot Workflow
+# Documents the multi-agent orchestration flow powered by Airia
+#
+# Flow: Alert → Diagnosis Agent → Policy Agent → Action Proposal
+
+name: growthpilot-autopilot
+version: "1.0"
+description: >
+  Autonomous self-improving ad optimization workflow.
+  Triggered by KPI anomaly alerts, selects optimal actions
+  using Thompson Sampling bandits, and applies them in real-time.
+
+trigger:
+  type: kafka_event
+  topic: alerts.raised
+  filter:
+    severity: [high]
+    alert_type: [ROAS_DROP, CPA_SPIKE, PACING_ANOMALY, CVR_DROP]
+
+steps:
+  - id: diagnosis
+    name: Airia Diagnosis Agent
+    type: airia_pipeline
+    pipeline_id: "6e88e303-94bc-4467-9564-0dce434e462e"
+    description: >
+      Calls the GrowthPilot-ai Airia agent (Claude Haiku 4.5).
+      Receives alert context (ROAS, CPA, anomaly score, severity).
+      Returns: diagnosis, recommended_action, confidence, reasoning.
+    input:
+      campaign_id: "{{ alert.payload.campaign_id }}"
+      alert_type: "{{ alert.payload.alert_type }}"
+      severity: "{{ alert.payload.severity }}"
+      current_roas: "{{ alert.payload.current.roas }}"
+      baseline_roas: "{{ alert.payload.baseline.roas }}"
+      anomaly_score: "{{ alert.payload.anomaly_score }}"
+    output:
+      diagnosis: string
+      recommended_action: enum[PAUSE_CREATIVE, REALLOC_BUDGET, ADJUST_BID, REFRESH_COPY]
+      confidence: float
+      reasoning: string
+
+  - id: policy
+    name: Thompson Sampling Policy
+    type: python_function
+    function: app.agents.policy.ThompsonSamplingPolicy.select_action
+    description: >
+      Multi-armed bandit using Thompson Sampling.
+      Maintains Beta(alpha, beta) per (bucket_key, action_type).
+      Biases toward Airia recommendation when confidence >= 0.8.
+      Ensures exploration of suboptimal actions with low alpha/beta.
+    input:
+      workspace_id: "{{ alert.workspace_id }}"
+      bucket_key: "build_bucket_key(alert_type, severity)"
+      airia_recommendation: "{{ diagnosis.recommended_action }}"
+      airia_confidence: "{{ diagnosis.confidence }}"
+    output:
+      chosen_action: string
+      thompson_samples: dict
+      chosen_reason: string
+
+  - id: propose
+    name: Emit Action Proposal
+    type: kafka_emit
+    topic: actions.proposed
+    description: >
+      Emits a validated ActionProposed event with full audit trail:
+      action type, parameters, constraints, policy context, and explainability.
+      Downstream executor service applies the action with guardrails.
+    schema: growthpilot_contracts.actions.ActionProposed
+
+guardrails:
+  max_budget_shift_pct: 0.10
+  cooldown_minutes: 30
+  max_actions_per_campaign_per_hour: 5
+  severity_threshold: high
+
+self_improvement:
+  mechanism: thompson_sampling
+  table: growthpilot.policy_bandit
+  update_trigger: kafka_event(policy.updated)
+  reward_signal: >
+    Binary success based on ROAS/CPA improvement after evaluation window.
+    success=1 → alpha += 1 (action reinforced)
+    success=0 → beta += 1 (action penalized)
+  convergence: >
+    Actions that consistently improve KPIs accumulate high alpha.
+    Thompson Sampling increasingly selects proven actions over time.

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/envelope.schema.json",
+  "title": "GrowthPilot Event Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "event_type", "ts", "workspace_id", "source", "payload"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Schema version string like '1.0'."
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique id for this event."
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp in UTC recommended."
+    },
+    "workspace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "enum": ["simulator", "google", "meta", "tiktok", "ingestion-service", "kpi-service", "orchestrator-service", "executor-service", "evaluator-service"],
+      "description": "Where the event originated."
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional distributed trace id."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Message payload. Concrete schema depends on event_type."
+    }
+  }
+}

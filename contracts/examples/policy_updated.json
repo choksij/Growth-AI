@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "event_id": "66666666-6666-6666-6666-666666666666",
+  "event_type": "POLICY_UPDATED",
+  "ts": "2026-02-21T15:08:00Z",
+  "workspace_id": "ws_demo",
+  "source": "evaluator-service",
+  "trace_id": "trace_demo_001",
+  "payload": {
+    "action_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "bucket_key": "objective=roas|severity=high|type=prospecting",
+    "action_type": "REALLOC_BUDGET",
+    "success": true,
+    "reward": {
+      "roas_before": 1.4,
+      "roas_after": 1.78,
+      "cpa_before": 20.0,
+      "cpa_after": 16.1,
+      "score_S": 0.42
+    },
+    "bandit_update": {
+      "alpha_before": 7,
+      "beta_before": 3,
+      "alpha_after": 8,
+      "beta_after": 3
+    }
+  }
+}

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "growthpilot-simulator-service"
+version = "0.1.0"
+description = "Synthetic ad event simulator for GrowthPilot."
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2.6.1",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.6",
+  "aiokafka>=0.10.0",
+  "orjson>=3.10.0",
+  "python-dotenv>=1.0.1",
+
+  "growthpilot-contracts @ file:///contracts/python",
+
+  # ✅ shared library (installed from inside the container)
+  "growthpilot-shared @ file:///shared/python",
+]
+
+[tool.setuptools]
+packages = ["app"]

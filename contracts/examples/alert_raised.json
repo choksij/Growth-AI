@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "event_id": "33333333-3333-3333-3333-333333333333",
+  "event_type": "ALERT_RAISED",
+  "ts": "2026-02-21T15:05:10Z",
+  "workspace_id": "ws_demo",
+  "source": "kpi-service",
+  "trace_id": "trace_demo_001",
+  "payload": {
+    "alert_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "campaign_id": "cmp_1",
+    "severity": "high",
+    "alert_type": "ROAS_DROP",
+    "window": "15m",
+    "baseline": {
+      "roas": 2.1,
+      "cpa": 14.8,
+      "ctr": 0.021,
+      "cvr": 0.041
+    },
+    "current": {
+      "roas": 1.4,
+      "cpa": 20.0,
+      "ctr": 0.018,
+      "cvr": 0.0389
+    },
+    "anomaly_score": 3.4,
+    "evidence": [
+      {
+        "signal": "ad:ad_2 ctr",
+        "value": 0.006
+      },
+      {
+        "signal": "segment:seg_2 roas",
+        "value": 0.9
+      }
+    ]
+  }
+}

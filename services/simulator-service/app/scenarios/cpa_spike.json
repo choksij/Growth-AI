@@ -1,0 +1,5 @@
+{
+  "name": "cpa_spike",
+  "description": "CPC rises and CVR decreases, causing CPA to spike.",
+  "duration_s": 180
+}

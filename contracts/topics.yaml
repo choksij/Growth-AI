@@ -1,0 +1,29 @@
+version: "1.0"
+notes:
+  - "Authoritative topic list for GrowthPilot AI."
+  - "All services must only use topics defined here."
+  - "Default partitions=1 for local dev; can be raised later."
+
+defaults:
+  partitions: 1
+  replication_factor: 1
+  cleanup_policy: delete
+  retention_ms: 604800000   # 7 days
+
+topics:
+  - name: ad.events
+    description: "Raw ad events from simulator/connectors."
+  - name: ad.events.normalized
+    description: "Canonical normalized events after ingestion-service."
+  - name: kpi.updates
+    description: "Rolling KPI updates emitted by kpi-service."
+  - name: alerts.raised
+    description: "Alerts raised by kpi-service (ROAS drop, CPA spike, etc.)."
+  - name: actions.proposed
+    description: "Action plans proposed by orchestrator-service."
+  - name: actions.applied
+    description: "Actions applied by executor-service (audit + state changes)."
+  - name: policy.updated
+    description: "Bandit policy updates emitted by evaluator-service."
+  - name: decisions.audit
+    description: "Optional: explanation/audit trail for decisions and reasoning."

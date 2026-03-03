@@ -1,0 +1,26 @@
+# Core
+aiokafka==0.10.0
+
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-dotenv==1.0.1
+
+# Database
+psycopg[binary]==3.3.3
+sqlalchemy==2.0.25
+
+# Kafka (Redpanda compatible)
+kafka-python==2.0.2
+
+# FastAPI (future services)
+fastapi==0.110.0
+uvicorn==0.27.1
+
+# Observability
+#ddtrace==2.5.0
+
+# Utilities
+requests==2.31.0
+
+jsonschema==4.21.1
+referencing>=0.35.0

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://growthpilot.ai/schemas/alert_raised.schema.json",
+  "title": "Alert Raised",
+  "type": "object",
+  "allOf": [{ "$ref": "./envelope.schema.json" }],
+  "properties": {
+    "event_type": { "type": "string", "const": "ALERT_RAISED" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alert_id",
+        "campaign_id",
+        "severity",
+        "alert_type",
+        "window",
+        "baseline",
+        "current",
+        "anomaly_score",
+        "evidence"
+      ],
+      "properties": {
+        "alert_id": { "type": "string", "format": "uuid" },
+        "campaign_id": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+        "alert_type": {
+          "type": "string",
+          "enum": ["ROAS_DROP", "CPA_SPIKE", "PACING_ANOMALY", "CVR_DROP"]
+        },
+        "window": { "type": "string", "enum": ["1m", "5m", "15m", "60m"] },
+        "baseline": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "roas": { "type": "number", "minimum": 0 },
+            "cpa": { "type": "number", "minimum": 0 },
+            "ctr": { "type": "number", "minimum": 0 },
+            "cvr": { "type": "number", "minimum": 0 }
+          }
+        },
+        "current": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "roas": { "type": "number", "minimum": 0 },
+            "cpa": { "type": "number", "minimum": 0 },
+            "ctr": { "type": "number", "minimum": 0 },
+            "cvr": { "type": "number", "minimum": 0 }
+          }
+        },
+        "anomaly_score": { "type": "number", "minimum": 0 },
+        "evidence": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["signal", "value"],
+            "properties": {
+              "signal": { "type": "string", "minLength": 1 },
+              "value": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["event_type", "payload"]
+}
